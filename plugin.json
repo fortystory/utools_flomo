@@ -1,0 +1,49 @@
+{
+    "logo": "icons/logo.png",
+    "platform": ["win32"],
+    "preload": "preload.js",
+    "features": [{
+        "code": "flomo_add_width_tag",
+        "explain": "flomo添加标签和memo",
+        "icon": "icons/logo.png",
+        "platform": ["win32"],
+        "cmds": [
+            "memowithtag",
+            "带标签memo",
+            "ddbnqmmemo"
+        ]
+    }, {
+        "code": "flomo_add",
+        "explain": "flomo 添加memo",
+        "icon": "icons/logo.png",
+        "platform": ["win32"],
+        "cmds": [
+            "flomomemo",
+            "memo",
+            "tmjxmemo"
+        ]
+    }, {
+        "code": "flomo_del_tag",
+        "explain": "flomo: 删除本地标签",
+        "icon": "icons/logo.png",
+        "platform": ["win32"],
+        "cmds": [
+            "flomodeltag",
+            "删除本地标签",
+            "ujiubfdibnqm"
+        ]
+    }, {
+        "code": "flomo_local_memo",
+        "explain": "flomo: 删除本地标签",
+        "icon": "icons/logo.png",
+        "platform": ["win32"],
+        "cmds": [
+            "查看本地",
+            "删除本地标签",
+            "ujiubfdibnqm"
+        ]
+    }],
+    "pluginSetting": {
+        "single": false
+    }
+}
