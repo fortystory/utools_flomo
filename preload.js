@@ -60,13 +60,7 @@ function get_next(prefix) {
     let search_list = []
     tags.map((tag) => {
         if (tag.indexOf(prefix) == 0) {
-            search_list.push({
-                title: tag,
-                description: "tags",
-                content: tag,
-                icon: 'icons/logo.png', // 图标
-                type: 'tags_list'
-            });
+            search_list.push(tag);
         }
     });
     return search_list
@@ -84,7 +78,7 @@ function send_memo(content) {
     if (strs.length >= 1) {
         if (is_start_by_tag(strs[0])) {
             //更新标签数据
-            update_tags(strs[0]);
+            add_tag(strs[0]);
         }
     }
     post(api_url, JSON.stringify({ 'content': content }));
@@ -94,7 +88,7 @@ function send_memo(content) {
  * 更新标签数组
  * @param {string} new_tag 新标签
  */
-function update_tags(new_tag) {
+function add_tag(new_tag) {
     let need_add = true;
     tags.map((tag) => {
         if (tag === new_tag) { //如果存在 忽略
@@ -107,6 +101,40 @@ function update_tags(new_tag) {
         tags.push(new_tag);
         let res = utools.dbStorage.setItem("uflomo_tags", tags);
     }
+}
+
+function del_tag(tag_text) {
+    let _tags = [];
+    tags.map((tag) => {
+        if (tag != tag_text) {
+            _tags.push(tag);
+        }
+    });
+    tags = _tags;
+    utools.dbStorage.setItem("uflomo_tags", tags); //更新
+}
+
+
+function edit_tag(old_tag_text, new_tag_text) {
+    let _tags = [];
+    let tag_idx = -1;
+    tags.map((tag, idx) => {
+        if (tag == old_tag_text) {
+            tag_idx = idx;
+        }
+        if (tag == new_tag_text) {
+            utools.showNotification('编辑后的标签已经存在,请重新进行编辑!', 'uflomo_custom_local_tag');
+            window.utools.outPlugin();
+        }
+    });
+    if (tag_idx == -1) {
+        utools.showNotification('标签不存在!', 'uflomo_custom_local_tag');
+        window.utools.outPlugin();
+    }
+    tags[tag_idx] = new_tag_text;
+    utools.dbStorage.setItem("uflomo_tags", tags); //更新
+    utools.showNotification('标签更新成功!' + old_tag_text + "->" + new_tag_text);
+    window.utools.outPlugin();
 }
 
 /**
@@ -127,11 +155,17 @@ function put_local_memo(memo) {
     return true;
 }
 
+
+/**
+ * 检查是否需要配置api url
+ * @param {boolean} as_check 是否给出提示
+ * @returns boolean
+ */
 function check_api(as_check = false) {
     if (as_check == false) {
         if (api_url === "") {
             utools.showNotification('尚未配置flomo用户api url,请点击进行配置!', 'uflomo_config_api');
-            // window.utools.outPlugin();
+            window.utools.outPlugin();
         }
         return true;
     }
@@ -163,21 +197,32 @@ window.exports = {
             enter: (action, callbackSetList) => {
                 check_api();
                 // 如果进入插件就要显示列表数据
-                callbackSetList([{
-                    title: '添加标签',
-                    description: '输入 #标签',
-                    content: "#",
-                    icon: 'icons/logo.png', // 图标(可选)
-                    type: 'tags_list',
-                }])
+                // callbackSetList([{
+                //     title: '输入标签',
+                //     description: '输入 #标签',
+                //     content: "#",
+                //     icon: 'icons/logo.png', // 图标(可选)
+                //     type: 'tags_list',
+                // }])
+                let search_list = [];
+                tags.map((tag) => {
+                    search_list.push({
+                        title: tag,
+                        description: tag,
+                        content: tag,
+                        icon: 'icons/logo.png', // 图标
+                        type: 'tags_list'
+                    });
+                })
+                callbackSetList(search_list)
             },
             // 子输入框内容变化时被调用 可选 (未设置则无搜索)
             search: (action, searchWord, callbackSetList) => {
                 // 获取一些数据
                 // 执行 callbackSetList 显示出来
-                // 判断最后的是否是空格  ??
-                let search_list = get_next(searchWord)
-                if (search_list.length == 0) {
+                let _tags = get_next(searchWord);
+                let search_list = [];
+                if (_tags.length == 0) {
                     let t_title = '创建memo并附带标签';
                     if (!is_start_by_tag(searchWord)) {
                         t_title = '创建memo';
@@ -188,6 +233,33 @@ window.exports = {
                         content: searchWord,
                         icon: 'icons/logo.png', // 图标
                         type: 'create_memo',
+                    })
+                } else if (_tags.length == 1) {
+                    if (searchWord != _tags[0]) {
+                        search_list.push({
+                            title: _tags[0],
+                            description: _tags[0],
+                            content: _tags[0],
+                            icon: 'icons/logo.png', // 图标
+                            type: 'tags_list',
+                        });
+                    }
+                    search_list.push({
+                        title: "创建只包含标签的memo",
+                        description: searchWord,
+                        content: searchWord,
+                        icon: 'icons/logo.png', // 图标
+                        type: 'create_memo',
+                    });
+                } else {
+                    _tags.map((tag) => {
+                        search_list.push({
+                            title: tag,
+                            description: tag,
+                            content: tag,
+                            icon: 'icons/logo.png', // 图标
+                            type: 'tags_list'
+                        });
                     })
                 }
                 callbackSetList(search_list)
@@ -209,7 +281,7 @@ window.exports = {
                 }
             },
             // 子输入框为空时的占位符，默认为字符串"搜索"
-            placeholder: "创建memo带标签"
+            placeholder: "选择,输入标签新标签,或直接输入内容"
         }
     },
     "uflomo_add": {
@@ -248,9 +320,129 @@ window.exports = {
             placeholder: "创建memo"
         }
     },
-    // "uflomo_custom_local_tag": {
+    "uflomo_custom_local_tag": {
+        mode: "list",
+        args: {
+            enter: (action, callbackSetList) => {
+                let search_list = [];
+                tags.map((tag) => {
+                    search_list.push({
+                        title: tag,
+                        description: "tags",
+                        content: tag,
+                        icon: 'icons/logo.png', // 图标
+                        type: 'tags_list'
+                    });
+                });
+                callbackSetList(search_list);
+            },
+            search: (action, searchWord, callbackSetList) => {
+                let _tags = get_next(searchWord);
+                let search_list = [];
+                if (_tags.length == 0) {
+                    search_list.push({
+                        title: tag,
+                        description: "tags",
+                        content: tag,
+                        icon: 'icons/logo.png',
+                        type: 'tags_list'
+                    });
+                } else {
+                    _tags.map((tag) => {
+                        search_list.push({
+                            title: tag,
+                            description: "tags",
+                            content: tag,
+                            icon: 'icons/logo.png',
+                            type: 'tags_list'
+                        });
+                    });
+                }
+                callbackSetList(search_list);
+            },
+            select: (action, itemData, callbackSetList) => {
+                if (itemData.type == 'tags_list') { //从标签列表进入,进行操作选择 编辑或者删除
+                    let select_list = [];
+                    select_list.push({
+                        title: "编辑",
+                        description: "编辑" + itemData.content + "标签",
+                        content: itemData.content,
+                        icon: 'icons/logo.png',
+                        type: 'edit_tag'
+                    });
+                    select_list.push({
+                        title: "删除",
+                        description: "删除" + itemData.content + "标签",
+                        content: itemData.content,
+                        icon: 'icons/logo.png',
+                        type: 'del_tag'
+                    });
+                    callbackSetList(select_list);
+                } else if (itemData.type == 'edit_tag') { //编辑需要输入新的标签
+                    console.log(itemData);
+                    old_content = itemData.content;
+                    let select_list = [];
+                    let new_content = itemData.content;
+                    utools.setSubInputValue(old_content);
+                    select_list = [{
+                        title: "正在编辑标签",
+                        description: "正在编辑标签",
+                        content: new_content,
+                        old_content: old_content,
+                        icon: 'icons/logo.png',
+                        type: 'do_edit_tag'
+                    }];
+                    callbackSetList(select_list);
 
-    // },
+                    // utools.setSubInputValue(old_content);
+
+                    let is_fist_in = true;
+                    utools.setSubInput(({ text }) => {
+                        console.log("new tag:" + text);
+                        if (is_fist_in) {
+                            utools.setSubInputValue(old_content);
+                            is_fist_in = false;
+                        }
+                        new_content = text;
+
+                        select_list = [{
+                            title: "正在编辑标签",
+                            description: "正在编辑标签",
+                            content: new_content,
+                            old_content: old_content,
+                            icon: 'icons/logo.png',
+                            type: 'do_edit_tag'
+                        }];
+                        console.log("select_list");
+                        console.log(select_list);
+                        callbackSetList(select_list);
+                    });
+                } else if (itemData.type == 'do_edit_tag') {
+                    utools.removeSubInput();
+                    console.log("do_edit_tag");
+                    console.log(itemData);
+                    edit_tag(itemData.old_content, itemData.content);
+                } else if (itemData.type == 'del_tag') { // tags_list 中选择了删除操作
+                    del_tag(itemData.content);
+                }
+                //删除或编辑后,回到列表
+                if (itemData.type != 'tags_list' && itemData.type != 'edit_tag' && itemData.type != "do_edit_tag") {
+                    let search_list = [];
+                    tags.map((tag) => {
+                        search_list.push({
+                            title: tag,
+                            description: "tags",
+                            content: tag,
+                            icon: 'icons/logo.png', // 图标
+                            type: 'tags_list'
+                        });
+                    });
+                    callbackSetList(search_list);
+                }
+            },
+            placeholder: "管理本地标签"
+        }
+    },
     "uflomo_config_api": {
         mode: "list",
         args: {
@@ -330,18 +522,18 @@ window.exports = {
 
 //加载插件后获取存储的标签信息
 utools.onPluginReady(() => {
-    let _tags = utools.dbStorage.getItem("uflomo_tags")
+    let _tags = utools.dbStorage.getItem("uflomo_tags");
     if (_tags === null || typeof _tags === 'undefined') {
-        consle.log("uflomo: tags is null")
+        consle.log("uflomo: tags is null");
     } else {
-        tags = _tags
+        tags = _tags;
     }
 
-    let _api_url = utools.dbStorage.getItem("uflomo_api_url")
+    let _api_url = utools.dbStorage.getItem("uflomo_api_url");
     console.log("api url: " + _api_url);
     if (_api_url === null || typeof _api_url === 'undefined') {
         consle.log("uflomo:api url is null")
     } else {
-        api_url = _api_url
+        api_url = _api_url;
     }
 })

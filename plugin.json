@@ -10,6 +10,7 @@
         "cmds": [
             "memowithtag",
             "带标签memo",
+            "add memo width tag",
             "ddbnqmmemo"
         ]
     }, {
@@ -29,7 +30,8 @@
         "platform": ["win32"],
         "cmds": [
             "管理本地标签",
-            "grlibfdibnqm"
+            "grlibfdibnqm",
+            "custom local tag"
         ]
     }, {
         "code": "uflomo_config_api",
