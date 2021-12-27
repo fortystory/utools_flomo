@@ -3,7 +3,7 @@
     "platform": ["win32"],
     "preload": "preload.js",
     "features": [{
-        "code": "flomo_add_width_tag",
+        "code": "uflomo_add_width_tag",
         "explain": "flomo添加标签和memo",
         "icon": "icons/logo.png",
         "platform": ["win32"],
@@ -13,7 +13,7 @@
             "ddbnqmmemo"
         ]
     }, {
-        "code": "flomo_add",
+        "code": "uflomo_add",
         "explain": "flomo 添加memo",
         "icon": "icons/logo.png",
         "platform": ["win32"],
@@ -23,24 +23,27 @@
             "tmjxmemo"
         ]
     }, {
-        "code": "flomo_del_tag",
-        "explain": "flomo: 删除本地标签",
+        "code": "uflomo_custom_local_tag",
+        "explain": "flomo: 管理本地标签",
         "icon": "icons/logo.png",
         "platform": ["win32"],
         "cmds": [
-            "flomodeltag",
-            "删除本地标签",
-            "ujiubfdibnqm"
+            "管理本地标签",
+            "grlibfdibnqm"
         ]
     }, {
-        "code": "flomo_local_memo",
-        "explain": "flomo: 删除本地标签",
+        "code": "uflomo_config_api",
+        "explain": "flomo: 配置api",
         "icon": "icons/logo.png",
         "platform": ["win32"],
         "cmds": [
-            "查看本地",
-            "删除本地标签",
-            "ujiubfdibnqm"
+            "flomo:配置api",
+            {
+                "type": "regex",
+                "label": "flomo:配置api",
+                "match": "/^https:\\/\\/flomoapp\\.com\\/[\\w/]+$/",
+                "minLength": 60
+            }
         ]
     }],
     "pluginSetting": {
