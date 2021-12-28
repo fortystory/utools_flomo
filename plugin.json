@@ -8,26 +8,14 @@
         "icon": "icons/logo.png",
         "platform": ["win32"],
         "cmds": [
-            "memowithtag",
-            "带标签memo",
-            "add memo width tag",
-            "ddbnqmmemo",
+            "memo",
+            "flomo:memo",
             {
                 "type": "regex",
-                "label": "flomo:创建带标签的memo",
+                "label": "flomo:memo",
                 "match": "/^#\\S+/",
                 "minLength": 2
             }
-        ]
-    }, {
-        "code": "uflomo_add",
-        "explain": "flomo 添加memo",
-        "icon": "icons/logo.png",
-        "platform": ["win32"],
-        "cmds": [
-            "flomomemo",
-            "memo",
-            "tmjxmemo"
         ]
     }, {
         "code": "uflomo_custom_local_tag",
@@ -37,7 +25,7 @@
         "cmds": [
             "管理本地标签",
             "grlibfdibnqm",
-            "custom local tag"
+            "flomo:local_tag"
         ]
     }, {
         "code": "uflomo_sort_local_tag",

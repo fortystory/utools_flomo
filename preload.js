@@ -72,7 +72,7 @@ function get_next(prefix) {
 function get_next_uflomo_add_width_tag_list(_tags, searchWord) {
     let search_list = [];
     if (_tags.length == 0) {
-        let t_title = '创建memo并附带标签';
+        let t_title = '创建带标签memo';
         if (!is_start_by_tag(searchWord)) {
             t_title = '创建memo';
         }
@@ -80,7 +80,7 @@ function get_next_uflomo_add_width_tag_list(_tags, searchWord) {
             title: t_title,
             description: searchWord,
             content: searchWord,
-            icon: 'icons/logo.png',
+            icon: 'icons/tag.png',
             type: 'create_memo',
         })
     } else if (_tags.length == 1) {
@@ -97,7 +97,7 @@ function get_next_uflomo_add_width_tag_list(_tags, searchWord) {
             title: "创建只包含标签的memo",
             description: searchWord,
             content: searchWord,
-            icon: 'icons/logo.png',
+            icon: 'icons/tag.png',
             type: 'create_memo',
         });
     } else {
@@ -240,23 +240,19 @@ function add_0(str) {
     return str;
 }
 
-function set_sub_val(text) {
-    console.log("text:" + text);
-    utools.setSubInputValue(text);
-}
-
 /**
  * 检查是否需要配置api url
  * @param {boolean} as_check 是否给出提示
  * @returns boolean
  */
 function check_api(as_check = false) {
+    api_url = utools.dbStorage.getItem("uflomo_api_url");
     if (as_check == false) {
         if (api_url === "") {
             utools.showNotification('尚未配置flomo用户api url,请点击进行配置!', 'uflomo_config_api');
             window.utools.outPlugin();
+            return true;
         }
-        return true;
     }
     return !(api_url === "");
 }
@@ -268,13 +264,14 @@ function set_api_url(api_url_str) {
     api_url_str = api_url_str.trim();
     let reg = /^https:\/\/flomoapp\.com\/[\w/ ]+$/;
     if (reg.test(api_url_str)) {
-        utools.dbStorage.setItem("uflomo_api_url", api_url_str)
+        utools.dbStorage.setItem("uflomo_api_url", api_url_str);
+        api_url = api_url_str;
         utools.showNotification('flomo api url配置成功!');
+        window.utools.outPlugin();
     } else {
         utools.showNotification('输入的api url为: ' + api_url_str);
         utools.showNotification('flomo api url配置失败!请检查api url是否正确');
     }
-    window.utools.outPlugin();
 }
 
 let is_first = true; //标记只有第一次进入起效,替换子输入框文字
@@ -284,7 +281,7 @@ window.exports = {
         args: {
             // 进入插件时调用（可选）
             enter: (action, callbackSetList) => {
-                check_api();
+                check_api(false);
                 let search_list = [];
                 if (action.type == 'regex' && is_first) {
                     let searchWord = action.payload;
@@ -334,36 +331,6 @@ window.exports = {
             placeholder: "选择,输入标签新标签,或直接输入内容"
         }
     },
-    "uflomo_add": {
-        mode: 'list',
-        args: {
-            enter: (action, callbackSetList) => {
-                callbackSetList([{
-                    title: '向flomo添加memo',
-                    description: '输入内容',
-                    icon: 'icons/logo.png' // 图标(可选)
-                }])
-            },
-            search: (action, searchWord, callbackSetList) => {
-                callbackSetList(
-                    [{
-                        title: searchWord,
-                        description: "编辑memo内容",
-                        content: searchWord,
-                        icon: 'icons/logo.png', // 图标
-                    }]
-                );
-            },
-            select: (action, itemData, callbackSetList) => {
-                window.utools.hideMainWindow();
-                // 发送emeo
-                send_memo(itemData.content);
-                // window.utools.outPlugin() //这里不能退出插件,发送post请求时异步操作
-            },
-            // 子输入框为空时的占位符，默认为字符串"搜索"
-            placeholder: "创建memo"
-        }
-    },
     "uflomo_custom_local_tag": {
         mode: "list",
         args: {
@@ -374,7 +341,7 @@ window.exports = {
                         title: tag,
                         description: "tags",
                         content: tag,
-                        icon: 'icons/logo.png', // 图标
+                        icon: 'icons/tag.png', // 图标
                         type: 'tags_list'
                     });
                 });
@@ -388,7 +355,7 @@ window.exports = {
                         title: tag,
                         description: "tags",
                         content: tag,
-                        icon: 'icons/logo.png',
+                        icon: 'icons/tag.png',
                         type: 'tags_list'
                     });
                 } else {
@@ -397,7 +364,7 @@ window.exports = {
                             title: tag,
                             description: "tags",
                             content: tag,
-                            icon: 'icons/logo.png',
+                            icon: 'icons/tag.png',
                             type: 'tags_list'
                         });
                     });
@@ -411,14 +378,14 @@ window.exports = {
                         title: "编辑",
                         description: "编辑" + itemData.content + "标签",
                         content: itemData.content,
-                        icon: 'icons/logo.png',
+                        icon: 'icons/edit.png',
                         type: 'edit_tag'
                     });
                     select_list.push({
                         title: "删除",
                         description: "删除" + itemData.content + "标签",
                         content: itemData.content,
-                        icon: 'icons/logo.png',
+                        icon: 'icons/delete.png',
                         type: 'del_tag'
                     });
                     callbackSetList(select_list);
@@ -433,7 +400,7 @@ window.exports = {
                         description: "正在编辑标签",
                         content: new_content,
                         old_content: old_content,
-                        icon: 'icons/logo.png',
+                        icon: 'icons/edit.png',
                         type: 'do_edit_tag'
                     }];
                     callbackSetList(select_list);
@@ -452,7 +419,7 @@ window.exports = {
                             description: "正在编辑标签",
                             content: new_content,
                             old_content: old_content,
-                            icon: 'icons/logo.png',
+                            icon: 'icons/edit.png',
                             type: 'do_edit_tag'
                         }];
                         console.log("select_list");
@@ -475,7 +442,7 @@ window.exports = {
                             title: tag,
                             description: "tags",
                             content: tag,
-                            icon: 'icons/logo.png', // 图标
+                            icon: 'icons/tag.png', // 图标
                             type: 'tags_list'
                         });
                     });
@@ -498,7 +465,7 @@ window.exports = {
                             title: '你已经配置了flomo api url,选择此项会更新api url',
                             description: "新的api为:" + action.payload,
                             content: action.payload,
-                            icon: 'icons/logo.png',
+                            icon: 'icons/edit.png',
                             type: 'config_api'
                         }];
                     } else {
@@ -516,21 +483,21 @@ window.exports = {
                         _list.push({
                             title: '输入api url',
                             description: "配置flomo api url",
-                            icon: 'icons/logo.png',
+                            icon: 'icons/edit.png',
                             type: 'config_api'
                         });
                     }
                     _list.push({
                         title: '了解flomo api url',
                         description: '了解flomo api url',
-                        icon: 'icons/logo.png',
+                        icon: 'icons/info.png',
                         type: 'url',
                         url: 'https://help.flomoapp.com/advance/api.html'
                     })
                     _list.push({
                         title: '查找你的flomo api url',
                         description: '查找你的flomo api url',
-                        icon: 'icons/logo.png',
+                        icon: 'icons/info.png',
                         type: 'url',
                         url: 'https://flomoapp.com/mine?source=incoming_webhook'
                     });
@@ -571,7 +538,6 @@ utools.onPluginReady(() => {
     }
 
     let _api_url = utools.dbStorage.getItem("uflomo_api_url");
-    console.log("api url: " + _api_url);
     if (_api_url === null || typeof _api_url === 'undefined') {
         consle.log("uflomo:api url is null")
     } else {
