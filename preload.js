@@ -89,7 +89,7 @@ function get_next_uflomo_add_width_tag_list(_tags, searchWord) {
                 title: _tags[0],
                 description: _tags[0],
                 content: _tags[0],
-                icon: 'icons/logo.png',
+                icon: 'icons/tag.png',
                 type: 'tags_list',
             });
         }
@@ -106,7 +106,7 @@ function get_next_uflomo_add_width_tag_list(_tags, searchWord) {
                 title: tag,
                 description: tag,
                 content: tag,
-                icon: 'icons/logo.png',
+                icon: 'icons/tag.png',
                 type: 'tags_list'
             });
         })
@@ -298,7 +298,7 @@ window.exports = {
                             title: tag,
                             description: tag,
                             content: tag,
-                            icon: 'icons/logo.png',
+                            icon: 'icons/tag.png',
                             type: 'tags_list'
                         });
                     })
@@ -309,7 +309,6 @@ window.exports = {
             search: (action, searchWord, callbackSetList) => {
                 let _tags = get_next(searchWord);
                 let search_list = get_next_uflomo_add_width_tag_list(_tags, searchWord);
-                console.log(search_list);
                 callbackSetList(search_list)
             },
             select: (action, itemData, callbackSetList) => {
