@@ -11,7 +11,13 @@
             "memowithtag",
             "带标签memo",
             "add memo width tag",
-            "ddbnqmmemo"
+            "ddbnqmmemo",
+            {
+                "type": "regex",
+                "label": "flomo:创建带标签的memo",
+                "match": "/^#\\S+/",
+                "minLength": 2
+            }
         ]
     }, {
         "code": "uflomo_add",
@@ -32,6 +38,16 @@
             "管理本地标签",
             "grlibfdibnqm",
             "custom local tag"
+        ]
+    }, {
+        "code": "uflomo_sort_local_tag",
+        "explain": "flomo: 管理本地标签",
+        "icon": "icons/logo.png",
+        "platform": ["win32"],
+        "cmds": [
+            "本地标签排序",
+            "bfdibnqmpdxu",
+            "sort_local_tag"
         ]
     }, {
         "code": "uflomo_config_api",

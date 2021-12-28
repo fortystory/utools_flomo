@@ -1,5 +1,7 @@
-const cp = require('child_process'); //调用系统命令 cp.exec('notepad');
+// const cp = require('child_process'); //调用系统命令 cp.exec('notepad');
 const https = require("https");
+const fs = require('fs');
+
 let api_url = "";
 
 function post(api_url, send) {
@@ -23,8 +25,9 @@ function post(api_url, send) {
         // 在res的end事件触发后，通过JSON.parse将post解析为真正的POST请求格式，然后调用传递过来的回调函数处理数据
         res.on('end', function() {
             console.log("body = " + body);
-            // let json = JSON.parse(body)
-            // callback(json)
+            // let post_res_body = JSON.parse(body);
+            put_local_memo(body, "log");
+            window.utools.outPlugin(); //退出插件
         })
     });
     req.on('error', function(e) {
@@ -66,6 +69,51 @@ function get_next(prefix) {
     return search_list
 }
 
+function get_next_uflomo_add_width_tag_list(_tags, searchWord) {
+    let search_list = [];
+    if (_tags.length == 0) {
+        let t_title = '创建memo并附带标签';
+        if (!is_start_by_tag(searchWord)) {
+            t_title = '创建memo';
+        }
+        search_list.push({
+            title: t_title,
+            description: searchWord,
+            content: searchWord,
+            icon: 'icons/logo.png',
+            type: 'create_memo',
+        })
+    } else if (_tags.length == 1) {
+        if (searchWord != _tags[0]) {
+            search_list.push({
+                title: _tags[0],
+                description: _tags[0],
+                content: _tags[0],
+                icon: 'icons/logo.png',
+                type: 'tags_list',
+            });
+        }
+        search_list.push({
+            title: "创建只包含标签的memo",
+            description: searchWord,
+            content: searchWord,
+            icon: 'icons/logo.png',
+            type: 'create_memo',
+        });
+    } else {
+        _tags.map((tag) => {
+            search_list.push({
+                title: tag,
+                description: tag,
+                content: tag,
+                icon: 'icons/logo.png',
+                type: 'tags_list'
+            });
+        })
+    }
+    return search_list;
+}
+
 /**
  * 发送memo
  * @param {string} content 
@@ -81,7 +129,10 @@ function send_memo(content) {
             add_tag(strs[0]);
         }
     }
+    //调用发送接口
     post(api_url, JSON.stringify({ 'content': content }));
+    //存入本地文件
+    put_local_memo(content, "txt");
 }
 
 /**
@@ -151,10 +202,48 @@ function is_start_by_tag(str) {
  * @param {string} memo 
  * @returns boolean
  */
-function put_local_memo(memo) {
-    return true;
+function put_local_memo(memo, suffix) {
+    //获取本地用户目录
+    let doc_path = utools.getPath('documents');
+
+    let today = new Date()
+    let day = today.getDate();
+    let month = today.getMonth() + 1; // don't forget +1
+    let year = today.getFullYear();
+    let hour = today.getHours();
+    let minute = today.getMinutes();
+    let second = today.getSeconds();
+
+    //判断文件路径分隔符
+    let seq = '/';
+    if (utools.isWindows()) {
+        seq = '\\';
+    }
+    //创建flomo memo目录
+    let file_path = doc_path + seq + "uflomo_memo" + seq + year + seq + add_0(month);
+    if (!fs.existsSync(file_path)) {
+        fs.mkdirSync(file_path, { recursive: true });
+    }
+
+    //按日期创建文件,
+    file_path = file_path + seq + add_0(day) + "." + suffix;
+    //写入文件
+    let line = year + "-" + add_0(month) + "-" + add_0(day) + " " + add_0(hour) + ":" + add_0(minute) + ":" + add_0(second);
+    line = line + "\t" + memo + "\n";
+    fs.appendFileSync(file_path, line);
 }
 
+function add_0(str) {
+    if (str < 10) {
+        return "0" + str;
+    }
+    return str;
+}
+
+function set_sub_val(text) {
+    console.log("text:" + text);
+    utools.setSubInputValue(text);
+}
 
 /**
  * 检查是否需要配置api url
@@ -188,7 +277,7 @@ function set_api_url(api_url_str) {
     window.utools.outPlugin();
 }
 
-
+let is_first = true; //标记只有第一次进入起效,替换子输入框文字
 window.exports = {
     "uflomo_add_width_tag": { // 注意: 键对应的是 plugin.json 中的 features.code
         mode: 'list',
@@ -196,75 +285,36 @@ window.exports = {
             // 进入插件时调用（可选）
             enter: (action, callbackSetList) => {
                 check_api();
-                // 如果进入插件就要显示列表数据
-                // callbackSetList([{
-                //     title: '输入标签',
-                //     description: '输入 #标签',
-                //     content: "#",
-                //     icon: 'icons/logo.png', // 图标(可选)
-                //     type: 'tags_list',
-                // }])
                 let search_list = [];
-                tags.map((tag) => {
-                    search_list.push({
-                        title: tag,
-                        description: tag,
-                        content: tag,
-                        icon: 'icons/logo.png', // 图标
-                        type: 'tags_list'
-                    });
-                })
-                callbackSetList(search_list)
-            },
-            // 子输入框内容变化时被调用 可选 (未设置则无搜索)
-            search: (action, searchWord, callbackSetList) => {
-                // 获取一些数据
-                // 执行 callbackSetList 显示出来
-                let _tags = get_next(searchWord);
-                let search_list = [];
-                if (_tags.length == 0) {
-                    let t_title = '创建memo并附带标签';
-                    if (!is_start_by_tag(searchWord)) {
-                        t_title = '创建memo';
-                    }
-                    search_list.push({
-                        title: t_title,
-                        description: searchWord,
-                        content: searchWord,
-                        icon: 'icons/logo.png', // 图标
-                        type: 'create_memo',
-                    })
-                } else if (_tags.length == 1) {
-                    if (searchWord != _tags[0]) {
-                        search_list.push({
-                            title: _tags[0],
-                            description: _tags[0],
-                            content: _tags[0],
-                            icon: 'icons/logo.png', // 图标
-                            type: 'tags_list',
-                        });
-                    }
-                    search_list.push({
-                        title: "创建只包含标签的memo",
-                        description: searchWord,
-                        content: searchWord,
-                        icon: 'icons/logo.png', // 图标
-                        type: 'create_memo',
-                    });
+                if (action.type == 'regex' && is_first) {
+                    let searchWord = action.payload;
+                    let _tags = get_next(searchWord);
+                    search_list = get_next_uflomo_add_width_tag_list(_tags, searchWord);
+                    callbackSetList(search_list);
+                    setTimeout(() => {
+                        utools.setSubInputValue(action.payload + " ");
+                    }, 10);
+                    is_first = false;
                 } else {
-                    _tags.map((tag) => {
+                    tags.map((tag) => {
                         search_list.push({
                             title: tag,
                             description: tag,
                             content: tag,
-                            icon: 'icons/logo.png', // 图标
+                            icon: 'icons/logo.png',
                             type: 'tags_list'
                         });
                     })
+                    callbackSetList(search_list);
                 }
+            },
+            // 子输入框内容变化时被调用 可选 (未设置则无搜索)
+            search: (action, searchWord, callbackSetList) => {
+                let _tags = get_next(searchWord);
+                let search_list = get_next_uflomo_add_width_tag_list(_tags, searchWord);
+                console.log(search_list);
                 callbackSetList(search_list)
             },
-            // 用户选择列表中某个条目时被调用
             select: (action, itemData, callbackSetList) => {
                 //判断itemData.content是否存在空格
                 utools.setSubInputValue(itemData.content);
@@ -287,19 +337,14 @@ window.exports = {
     "uflomo_add": {
         mode: 'list',
         args: {
-            // 进入插件时调用（可选）
             enter: (action, callbackSetList) => {
-                // 如果进入插件就要显示列表数据
                 callbackSetList([{
                     title: '向flomo添加memo',
                     description: '输入内容',
                     icon: 'icons/logo.png' // 图标(可选)
                 }])
             },
-            // 子输入框内容变化时被调用 可选 (未设置则无搜索)
             search: (action, searchWord, callbackSetList) => {
-                // 获取一些数据
-                // 执行 callbackSetList 显示出来
                 callbackSetList(
                     [{
                         title: searchWord,
@@ -309,7 +354,6 @@ window.exports = {
                     }]
                 );
             },
-            // 用户选择列表中某个条目时被调用
             select: (action, itemData, callbackSetList) => {
                 window.utools.hideMainWindow();
                 // 发送emeo
@@ -393,8 +437,6 @@ window.exports = {
                         type: 'do_edit_tag'
                     }];
                     callbackSetList(select_list);
-
-                    // utools.setSubInputValue(old_content);
 
                     let is_fist_in = true;
                     utools.setSubInput(({ text }) => {
@@ -505,7 +547,6 @@ window.exports = {
                 }];
                 callbackSetList(_list);
             },
-            // 用户选择列表中某个条目时被调用
             select: (action, itemData, callbackSetList) => {
                 // window.utools.hideMainWindow()
                 if (itemData.type == 'config_api') {
